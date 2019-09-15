@@ -35,7 +35,7 @@ trait UserRoutes extends JsonSupport {
 
   //#all-routes
   //#users-get-post
-  //#users-get-delete   
+  //#users-get-delete
   lazy val userRoutes: Route =
     pathPrefix("users") {
       concat(
@@ -56,8 +56,7 @@ trait UserRoutes extends JsonSupport {
                   complete((StatusCodes.Created, performed))
                 }
               }
-            }
-          )
+            })
         },
         //#users-get-post
         //#users-get-delete
@@ -81,10 +80,8 @@ trait UserRoutes extends JsonSupport {
                 complete((StatusCodes.OK, performed))
               }
               //#users-delete-logic
-            }
-          )
-        }
-      )
+            })
+        })
       //#users-get-delete
     }
   //#all-routes
