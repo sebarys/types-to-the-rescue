@@ -1,25 +1,21 @@
 package com.sebarys
 
-import akka.actor.{ ActorRef, ActorSystem }
+import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
-
-import scala.concurrent.duration._
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives.delete
-import akka.http.scaladsl.server.directives.MethodDirectives.get
-import akka.http.scaladsl.server.directives.MethodDirectives.post
-import akka.http.scaladsl.server.directives.RouteDirectives.complete
+import akka.http.scaladsl.server.directives.MethodDirectives.{delete, get, post}
 import akka.http.scaladsl.server.directives.PathDirectives.path
-
-import scala.concurrent.Future
-import com.sebarys.UserRegistryActor._
+import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.pattern.ask
 import akka.util.Timeout
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 //#user-routes-class
-trait UserRoutes extends JsonSupport {
+trait UserRoutes {
   //#user-routes-class
 
   // we leave these abstract, since they will be provided by the App
@@ -48,15 +44,20 @@ trait UserRoutes extends JsonSupport {
               complete(users)
             },
             post {
-              entity(as[User]) { user =>
-                val userCreated: Future[ActionPerformed] =
-                  (userRegistryActor ? CreateUser(user)).mapTo[ActionPerformed]
-                onSuccess(userCreated) { performed =>
-                  log.info("Created user [{}]: {}", user.name, performed.description)
-                  complete((StatusCodes.Created, performed))
-                }
+              entity(as[User]) {
+                user =>
+                  val userCreated: Future[ActionPerformed] =
+                    (userRegistryActor ? CreateUser(user))
+                      .mapTo[ActionPerformed]
+                  onSuccess(userCreated) { performed =>
+                    log.info("Created user [{}]: {}",
+                             user.name,
+                             performed.description)
+                    complete((StatusCodes.Created, performed))
+                  }
               }
-            })
+            }
+          )
         },
         //#users-get-post
         //#users-get-delete
@@ -80,8 +81,10 @@ trait UserRoutes extends JsonSupport {
                 complete((StatusCodes.OK, performed))
               }
               //#users-delete-logic
-            })
-        })
+            }
+          )
+        }
+      )
       //#users-get-delete
     }
   //#all-routes
