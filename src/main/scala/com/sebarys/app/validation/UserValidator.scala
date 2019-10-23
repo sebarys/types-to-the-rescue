@@ -2,7 +2,7 @@ package com.sebarys.app.validation
 
 import java.util.regex.Pattern
 
-import com.sebarys.app.http.dto.CreateUserDto
+import com.sebarys.app.model.User
 
 class UserValidator {
 
@@ -18,7 +18,7 @@ class UserValidator {
   }
 
   //TODO sth can go wrong here
-  def validate(userToCreate: CreateUserDto): Unit = {
+  def validate(userToCreate: User): Unit = {
     checkRule(nameNotEmpty(userToCreate.name), "new user name couldn't be empty")
     checkRule(emailMatchesPattern(userToCreate.mail), "new user mail is not in correct")
     checkRule(emailNotEmpty(userToCreate.mail), "new user mail couldn't be empty")

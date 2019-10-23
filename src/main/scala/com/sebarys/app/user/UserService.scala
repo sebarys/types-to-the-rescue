@@ -11,9 +11,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class UserService(userRepository: UserRepository, userValidator: UserValidator)(implicit ec: ExecutionContext) {
 
   def createUser(createUserDto: CreateUserDto): Future[String] = {
-    userValidator.validate(createUserDto)
-    val newUser = User.fromCreateUserDto(createUserDto)
-    userRepository.store(newUser)
+    val userToCreate = User.fromCreateUserDto(createUserDto)
+    userValidator.validate(userToCreate)
+    userRepository.store(userToCreate)
   }
 
   def getUser(id: String): Future[User] = {
