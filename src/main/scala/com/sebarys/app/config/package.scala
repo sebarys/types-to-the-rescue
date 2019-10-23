@@ -2,6 +2,8 @@ package com.sebarys.app
 
 import com.typesafe.config.ConfigFactory
 
+import scala.util.Try
+
 package object config {
 
   case class ServerConfig(host: String, port: Int)
@@ -15,10 +17,10 @@ package object config {
     import pureconfig._
     import pureconfig.generic.auto._
 
-    //TODO sth can go wrong here
-    def load(configFile: String = "application.conf"): Config = {
-      ConfigSource.fromConfig(ConfigFactory.load(configFile)).load[Config]
-        .getOrElse(throw new RuntimeException("Error during parsing configuration"))
+    def load(configFile: String = "application.conf"): Try[Config] = {
+       Try{
+         ConfigSource.fromConfig(ConfigFactory.load(configFile)).loadOrThrow[Config]
+       }
     }
   }
 

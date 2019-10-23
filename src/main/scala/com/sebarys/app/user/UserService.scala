@@ -10,16 +10,19 @@ import scala.concurrent.{ExecutionContext, Future}
 class UserService(userRepository: UserRepository, userValidator: UserValidator)(implicit ec: ExecutionContext) {
 
   def createUser(userToCreate: User): Future[UserId] = {
-    userValidator.validate(userToCreate)
-    userRepository.store(userToCreate)
+    for {
+      _ <- Future.fromTry(userValidator.validate(userToCreate))
+      userId <- userRepository.store(userToCreate)
+    } yield userId
   }
 
   def getUser(id: UserId): Future[User] = {
-    userRepository.get(id)
-      .flatMap {
-        case Some(user) => Future.successful(user)
-        case None => Future.failed(throw new NoSuchElementException(s"user with id: $id doesn't exist"))
-      }
+    for {
+      maybeUser <- userRepository.get(id)
+    } yield maybeUser match {
+      case Some(user) => user
+      case None => throw new NoSuchElementException(s"user with id: $id doesn't exist")
+    }
   }
 
   def deleteUser(id: UserId): Future[Done] = {
