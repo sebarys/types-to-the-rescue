@@ -9,11 +9,11 @@
  * Information and shall use it only in accordance with the terms of the
  * license agreement you entered into with hybris.
  */
-package com.sebarys.app.user
+package com.sebarys.app.model
 
 import java.util.UUID
 
-import com.sebarys.app.http.dto.{ CreateUserDto, UserDto }
+import com.sebarys.app.http.dto.{CreateUserDto, UserDto}
 
 case class User(id: String, name: String, mail: String, age: Int)
 

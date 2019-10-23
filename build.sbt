@@ -1,9 +1,6 @@
 lazy val AkkaHttpVersion    = "10.1.9"
 lazy val AkkaVersion        = "2.5.25"
 lazy val PureConfigVersion  = "0.12.1"
-lazy val DoobieVersion      = "0.8.4"
-lazy val H2Version          = "1.4.199"
-lazy val FlywayVersion      = "6.0.4"
 lazy val ScalaTestVersion   = "3.0.7"
 
 lazy val root = (project in file("."))
@@ -23,13 +20,6 @@ lazy val root = (project in file("."))
 
       // config
       "com.github.pureconfig" %% "pureconfig"       % PureConfigVersion,
-
-      // DB
-      "com.h2database"    %  "h2"                   % H2Version,
-      "org.flywaydb"      %  "flyway-core"          % FlywayVersion,
-      "org.tpolecat"      %% "doobie-core"          % DoobieVersion,
-      "org.tpolecat"      %% "doobie-hikari"        % DoobieVersion,
-      "org.tpolecat"      %% "doobie-h2"            % DoobieVersion,
 
       // Test
       "com.typesafe.akka" %% "akka-http-testkit"    % AkkaHttpVersion   % Test,

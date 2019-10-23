@@ -1,51 +1,49 @@
 package com.sebarys.app.http.endpoints
 
 import akka.actor.ActorSystem
-import akka.event.Logging
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpResponse, StatusCodes }
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives.{ delete, get, post }
+import akka.http.scaladsl.server.directives.MethodDirectives.{delete, get, post}
 import akka.http.scaladsl.server.directives.PathDirectives.path
 import akka.http.scaladsl.server.directives.RouteDirectives.complete
-import com.sebarys.app.user.User
-import com.sebarys.app.http.dto.{ CreateUserDto, UserDto }
+import com.sebarys.app.http.dto.{CreateUserDto, UserCreatedDto, UserDto}
+import com.sebarys.app.user.UserService
+import spray.json.DefaultJsonProtocol
 
-trait UserRoutes {
+import scala.concurrent.ExecutionContextExecutor
 
-  // we leave these abstract, since they will be provided by the App
-  implicit def system: ActorSystem
+object UserRoutes extends SprayJsonSupport with DefaultJsonProtocol {
 
-  lazy val log = Logging(system, classOf[UserRoutes])
+  def createUserRoutes(userService: UserService)(implicit actorSystem: ActorSystem): Route = {
+    implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
 
-  lazy val userRoutes: Route =
     pathPrefix("users") {
       pathEnd {
         get {
-          // get all users
-          log.info("Getting all users")
-          import spray.json._
-          val entity = HttpEntity(
-            contentType = ContentTypes.`application/json`,
-            string = List(User("user1", "Max", "max@example.com", 30)).map(UserDto.fromUser).toJson.compactPrint)
-          complete(HttpResponse(StatusCodes.OK, entity = entity))
-        } ~ post {
-          entity(as[CreateUserDto]) { userToCreate =>
-            // create user
-            log.info("Creating user {}", userToCreate)
-            complete(HttpResponse(StatusCodes.OK))
+          val userDtoListF = userService.getAllUsers().map(userList => userList.map(UserDto.fromUser))
+          complete(userDtoListF)
+        } ~
+          post {
+            entity(as[CreateUserDto]) { userToCreate =>
+              import spray.json._
+              val userCreationF = userService.createUser(userToCreate)
+                .map(userId => HttpResponse(StatusCodes.Created, entity = UserCreatedDto.fromUserId(userId).toJson.toString))
+              complete(userCreationF)
+            }
           }
+      } ~
+        path(Segment) { userId =>
+          get {
+            val userF = userService.getUser(userId).map(UserDto.fromUser)
+            complete(userF)
+          } ~
+            delete {
+              val userDeletionF = userService.deleteUser(userId).map(_ => HttpResponse(StatusCodes.NoContent))
+              complete(userDeletionF)
+            }
         }
-      } ~ path(Segment) { userId =>
-        get {
-          // get user with given userId
-          log.info("Getting user with id {}", userId)
-          complete(HttpResponse(StatusCodes.OK))
-        } ~ delete {
-          // delete user with given userId
-          log.info("Deleting user with id {}", userId)
-          complete(HttpResponse(StatusCodes.OK))
-        }
-      }
     }
+  }
 }

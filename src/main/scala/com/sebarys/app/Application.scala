@@ -1,38 +1,29 @@
 package com.sebarys.app
 
-import cats.effect.{ContextShift, IO}
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.sebarys.app.config.Config
-import com.sebarys.app.http.HttpServer
-import com.sebarys.app.http.HttpServer.system
-import com.sebarys.app.storage.Database
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.ExecutionContext
+import scala.io.StdIn
 
 object Application extends App {
 
-  implicit val executionContext = ExecutionContext.global
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-  val program: IO[Unit] = for {
-    config <- Config.load()
-    _ <- Database.transactor(config.database).use(transactor => {
-      for {
-        _ <- Database.initialize(transactor)
-        eitherServerBinding <- IO.fromFuture(IO { HttpServer.startServer(config.server) }).attempt
-        _ <- eitherServerBinding match {
-          case Left(ex) => IO {
-            Console.err.println(s"Server could not start!")
-            ex.printStackTrace()
-            system.terminate()
-          }
-          case Right(bound) => IO {
-            println(s"Server online at http://${bound.localAddress.getHostString}:${bound.localAddress.getPort}/")
-          }
-        }
-        _ <- IO { Await.result(system.whenTerminated, Duration.Inf) }
-      } yield ()
-    })
-  } yield ()
+  implicit val system: ActorSystem = ActorSystem("actorSystemForAkkaHttp")
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val executionContext: ExecutionContext = system.dispatcher
+
+  val config = Config.load()
+  val dbConnection = storage.initDatabaseConnection(config.database)
+  val userRepository = storage.createUserRepository(dbConnection)
+  val userValidator = validation.createUserValidator()
+  val userService = user.createService(userRepository, userValidator)
+
+  val userEndpoints = http.createUserEndpoints(userService)
+
+  val serverBindingFuture = http.startServer(config.server, userEndpoints)
   
-  program.unsafeRunSync()
+  println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
+  StdIn.readLine() // let it run until user presses return
+  serverBindingFuture.onComplete(_ => system.terminate())
 }

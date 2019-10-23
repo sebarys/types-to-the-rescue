@@ -1,8 +1,8 @@
 package com.sebarys.app.http.dto
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.sebarys.app.user.User
-import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
+import com.sebarys.app.model.User
+import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 case class UserDto(userId: String, name: String, mail: String, age: Int)
 
