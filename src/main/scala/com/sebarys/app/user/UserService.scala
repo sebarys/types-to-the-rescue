@@ -1,22 +1,20 @@
 package com.sebarys.app.user
 
 import akka.Done
-import com.sebarys.app.http.dto.CreateUserDto
+import com.sebarys.app.model.{User, UserId}
 import com.sebarys.app.storage.UserRepository
-import com.sebarys.app.model.User
 import com.sebarys.app.validation.UserValidator
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class UserService(userRepository: UserRepository, userValidator: UserValidator)(implicit ec: ExecutionContext) {
 
-  def createUser(createUserDto: CreateUserDto): Future[String] = {
-    val userToCreate = User.fromCreateUserDto(createUserDto)
+  def createUser(userToCreate: User): Future[UserId] = {
     userValidator.validate(userToCreate)
     userRepository.store(userToCreate)
   }
 
-  def getUser(id: String): Future[User] = {
+  def getUser(id: UserId): Future[User] = {
     userRepository.get(id)
       .flatMap {
         case Some(user) => Future.successful(user)
@@ -24,7 +22,7 @@ class UserService(userRepository: UserRepository, userValidator: UserValidator)(
       }
   }
 
-  def deleteUser(id: String): Future[Done] = {
+  def deleteUser(id: UserId): Future[Done] = {
     userRepository.delete(id)
   }
 

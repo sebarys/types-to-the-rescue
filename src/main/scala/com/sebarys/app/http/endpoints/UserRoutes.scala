@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.directives.MethodDirectives.{delete, get, post}
 import akka.http.scaladsl.server.directives.PathDirectives.path
 import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import com.sebarys.app.http.dto.{CreateUserDto, UserCreatedDto, UserDto}
+import com.sebarys.app.model.{User, UserId}
 import com.sebarys.app.user.UserService
 import spray.json.DefaultJsonProtocol
 
@@ -28,19 +29,19 @@ object UserRoutes extends SprayJsonSupport with DefaultJsonProtocol {
           post {
             entity(as[CreateUserDto]) { userToCreate =>
               import spray.json._
-              val userCreationF = userService.createUser(userToCreate)
-                .map(userId => HttpResponse(StatusCodes.Created, entity = UserCreatedDto.fromUserId(userId).toJson.toString))
+              val userCreationF = userService.createUser(User.fromCreateUserDto(userToCreate))
+                .map(userId => HttpResponse(StatusCodes.Created, entity = UserCreatedDto(userId.value).toJson.toString))
               complete(userCreationF)
             }
           }
       } ~
         path(Segment) { userId =>
           get {
-            val userF = userService.getUser(userId).map(UserDto.fromUser)
+            val userF = userService.getUser(UserId(userId)).map(UserDto.fromUser)
             complete(userF)
           } ~
             delete {
-              val userDeletionF = userService.deleteUser(userId).map(_ => HttpResponse(StatusCodes.NoContent))
+              val userDeletionF = userService.deleteUser(UserId(userId)).map(_ => HttpResponse(StatusCodes.NoContent))
               complete(userDeletionF)
             }
         }

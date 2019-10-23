@@ -10,6 +10,6 @@ object UserDto extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val userJsonFormat: RootJsonFormat[UserDto] = jsonFormat4(UserDto.apply)
 
   def fromUser(user: User): UserDto = {
-    UserDto(user.id, user.name, user.mail, user.age)
+    UserDto(user.id.value, user.name.value, user.mail.value, user.age.value)
   }
 }
